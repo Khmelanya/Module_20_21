@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class ExplosionInteraction : IInteraction
+public class ExplosionInteraction : IBeginInteraction
 {
     private MouseRaycaster _planeRaycaster;
 
@@ -20,8 +20,6 @@ public class ExplosionInteraction : IInteraction
     }
 
     public void Begin() => ExplodeAtMouse();
-    public void Tick() { }
-    public void End() { }
 
     private void ExplodeAtMouse()
     {
@@ -30,18 +28,22 @@ public class ExplosionInteraction : IInteraction
         if (hasPoint == false)
             return;
 
-        ApplyExplosionForce(point);
+        ExplosionContext context = new ExplosionContext(point, _force, _radius, _upwardModifier);
+
+        ApplyExplosionForce(point, context);
     }
-    private void ApplyExplosionForce(Vector3 point)
+    private void ApplyExplosionForce(Vector3 point, ExplosionContext context)
     {
         Collider[] hits = Physics.OverlapSphere(point, _radius);
 
         foreach (var hit in hits)
         {
-            Rigidbody rigidbody = hit.attachedRigidbody;
-            if (rigidbody == null) continue;
+            bool hasExplodable = hit.TryGetComponent(out IExplodable explodable);
 
-           rigidbody.AddExplosionForce(_force, point, _radius, _upwardModifier, ForceMode.Impulse);
+            if (hasExplodable == false)
+                continue;
+
+            explodable.Explode(context);
         }
     }
 }

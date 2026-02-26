@@ -1,15 +1,13 @@
 using UnityEngine;
 
-public class DragInteraction : IInteraction
+public class DragInteraction : IContinuousInteraction
 {
     private readonly MouseRaycaster _planeRaycaster;
     private readonly LayerMask _draggableMask;
     private readonly LayerMask _groundMask;
 
     private Rigidbody _rigidbody;
-    private Draggable _draggable;
-
-    private bool _prevFreezeRotation;
+    private IGrabbable _grabbable;
 
     public DragInteraction(MouseRaycaster planeRaycaster, LayerMask draggableMask, LayerMask groundMask)
     {
@@ -27,7 +25,7 @@ public class DragInteraction : IInteraction
         if (TryGetHit(out RaycastHit hit) == false)
             return;
 
-        if (TryGetDraggable(hit, out Draggable draggable) == false)
+        if (TryGetGrabbable(hit, out IGrabbable grabbable) == false)
             return;
 
         Rigidbody rigidbody = hit.collider.attachedRigidbody;
@@ -35,7 +33,7 @@ public class DragInteraction : IInteraction
         if (rigidbody == null)
             return;
 
-        SetSelection(rigidbody, draggable);
+        SetSelection(rigidbody, grabbable);
     }
 
     private void Drag()
@@ -57,21 +55,20 @@ public class DragInteraction : IInteraction
         ClearSelection();
     }
 
-    private void SetSelection(Rigidbody rigidbody, Draggable draggable)
+    private void SetSelection(Rigidbody rigidbody, IGrabbable grabbable)
     {
         _rigidbody = rigidbody;
-        _draggable = draggable;
+        _grabbable = grabbable;
 
         _rigidbody.velocity = Vector3.zero;
 
-        _prevFreezeRotation = _rigidbody.freezeRotation;
         _rigidbody.freezeRotation = true;
     }
 
     private void MoveTowards(Vector3 targetPoint)
     {
         Vector3 toTarget = targetPoint - _rigidbody.position;
-        Vector3 desiredVelocity = toTarget * _draggable.followSpeed;
+        Vector3 desiredVelocity = toTarget * _grabbable.FollowSpeed;
 
         _rigidbody.velocity = desiredVelocity;
     }
@@ -81,7 +78,7 @@ public class DragInteraction : IInteraction
         _rigidbody.velocity = Vector3.zero;
 
         _rigidbody = null;
-        _draggable = null;
+        _grabbable = null;
     }
 
     private bool HasPicked() => _rigidbody == null;
@@ -91,9 +88,9 @@ public class DragInteraction : IInteraction
         return _planeRaycaster.TryGetObject(_draggableMask, out hit);
     }
 
-    private bool TryGetDraggable(RaycastHit hit, out Draggable draggable)
+    private bool TryGetGrabbable(RaycastHit hit, out IGrabbable grabbable)
     {
-        return hit.collider.TryGetComponent(out draggable);
+        return hit.collider.TryGetComponent(out grabbable);
     }
 
     private bool TryGetTargetPoint(out Vector3 targetPoint)

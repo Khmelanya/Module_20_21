@@ -16,8 +16,8 @@ public class InteractionController : MonoBehaviour
     private const int LeftMouseButton = 0;
     private const int RightMouseButton = 1;
 
-    private IInteraction _drag;
-    private IInteraction _explosion;
+    private IContinuousInteraction _drag;
+    private IBeginInteraction _explosion;
 
     private MouseRaycaster _raycaster;
 
